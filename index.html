@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jelajah Budaya Nusantara - Kelas 9</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f0f4f8;
+            overflow-x: hidden;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .card-anim {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card-anim:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .drop-zone {
+            border: 2px dashed #cbd5e0;
+            transition: all 0.3s ease;
+        }
+
+        .drop-zone.drag-over {
+            background-color: #ebf4ff;
+            border-color: #4299e1;
+        }
+
+        .draggable {
+            cursor: grab;
+            user-select: none;
+        }
+
+        .draggable:active {
+            cursor: grabbing;
+        }
+
+        #certificate {
+            display: none;
+            background: white;
+            border: 15px double #764ba2;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f2d74e;
+            animation: fall 3s linear infinite;
+        }
+
+        @keyframes fall {
+            to { transform: translateY(100vh) rotate(360deg); }
+        }
+
+        .audio-control {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- Audio Element -->
+    <audio id="bg-music" loop>
+        <source src="https://github.com/MuKod10/musiklatarsenibudaya/raw/refs/heads/main/Bronze_Tides.mp3" type="audio/mpeg">
+        Browser Anda tidak mendukung pemutaran musik.
+    </audio>
+
+    <!-- Audio Control Button -->
+    <div class="audio-control">
+        <button id="toggle-audio" onclick="toggleAudio()" class="bg-white p-3 rounded-full shadow-lg border border-purple-200 hover:bg-purple-50 transition-all">
+            <span id="audio-icon">🔇</span>
+        </button>
+    </div>
+
+    <!-- Game Container -->
+    <div id="game-container" class="max-w-4xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden min-h-[600px] flex flex-col relative">
+        
+        <!-- Header -->
+        <div class="gradient-bg p-6 text-white text-center">
+            <h1 class="text-2xl font-bold">Jelajah Budaya Nusantara</h1>
+            <p class="text-sm opacity-90">Materi Seni Budaya Kelas 9</p>
+            <div class="mt-4 flex justify-between items-center bg-white/20 rounded-full px-4 py-1 text-sm">
+                <span id="level-indicator">Level: 1/3</span>
+                <span id="score-indicator">Skor: 0</span>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="w-full bg-gray-200 h-2">
+            <div id="progress-bar" class="bg-yellow-400 h-2 transition-all duration-500" style="width: 33%"></div>
+        </div>
+
+        <!-- Screen: Main Menu -->
+        <div id="screen-start" class="flex-grow flex flex-col items-center justify-center p-10 text-center">
+            <div class="text-6xl mb-6">🇮🇩</div>
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">Selamat Datang, Budayawan Muda!</h2>
+            <p class="text-gray-600 mb-8 leading-relaxed">
+                Uji pengetahuanmu tentang keragaman seni dan budaya di Indonesia. 
+                Selesaikan 3 level tantangan dan dapatkan sertifikat kelulusanmu!
+            </p>
+            <input type="text" id="player-name" placeholder="Masukkan Nama Kamu..." class="w-full max-w-xs p-3 border-2 border-purple-200 rounded-xl mb-6 focus:border-purple-500 outline-none transition-all">
+            <button onclick="startGame()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-10 rounded-full shadow-lg transition-all active:scale-95">
+                Mulai Petualangan
+            </button>
+            <p class="mt-4 text-xs text-gray-400">Musik akan diputar otomatis setelah tombol diklik.</p>
+        </div>
+
+        <!-- Screen: Level 1 (Drag & Drop) -->
+        <div id="screen-l1" class="hidden flex-grow p-8">
+            <h3 class="text-xl font-semibold text-center mb-2">Level 1: Pasangkan Alat Musik</h3>
+            <p class="text-center text-gray-500 mb-8">Geser alat musik ke provinsi asalnya yang benar!</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="space-y-4">
+                    <div class="drop-zone p-4 rounded-xl text-center bg-gray-50" data-match="Angklung">
+                        <span class="font-bold text-gray-700">Jawa Barat</span>
+                        <div class="mt-2 min-h-[60px] flex items-center justify-center"></div>
+                    </div>
+                    <div class="drop-zone p-4 rounded-xl text-center bg-gray-50" data-match="Sasando">
+                        <span class="font-bold text-gray-700">Nusa Tenggara Timur</span>
+                        <div class="mt-2 min-h-[60px] flex items-center justify-center"></div>
+                    </div>
+                    <div class="drop-zone p-4 rounded-xl text-center bg-gray-50" data-match="Tifa">
+                        <span class="font-bold text-gray-700">Papua</span>
+                        <div class="mt-2 min-h-[60px] flex items-center justify-center"></div>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap gap-4 items-center justify-center content-center">
+                    <div draggable="true" class="draggable bg-white border-2 border-purple-500 p-3 rounded-lg shadow-sm font-semibold text-purple-700" id="item1">Angklung</div>
+                    <div draggable="true" class="draggable bg-white border-2 border-purple-500 p-3 rounded-lg shadow-sm font-semibold text-purple-700" id="item2">Tifa</div>
+                    <div draggable="true" class="draggable bg-white border-2 border-purple-500 p-3 rounded-lg shadow-sm font-semibold text-purple-700" id="item3">Sasando</div>
+                </div>
+            </div>
+            <div class="mt-10 text-center">
+                <button id="btn-check-l1" class="bg-green-500 text-white px-8 py-2 rounded-full hidden" onclick="checkL1()">Lanjut ke Level 2</button>
+            </div>
+        </div>
+
+        <!-- Screen: Level 2 (Matching Word) -->
+        <div id="screen-l2" class="hidden flex-grow p-8">
+            <h3 class="text-xl font-semibold text-center mb-2">Level 2: Klasifikasi Tari</h3>
+            <p class="text-center text-gray-500 mb-8">Pilih jenis penyajian yang tepat untuk tari berikut!</p>
+            
+            <div class="space-y-6 max-w-lg mx-auto">
+                <div class="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border">
+                    <span class="font-bold">Tari Saman (Aceh)</span>
+                    <select class="l2-answer p-2 rounded border focus:ring-2 ring-purple-300" data-correct="Kelompok">
+                        <option value="">Pilih...</option>
+                        <option value="Tunggal">Tari Tunggal</option>
+                        <option value="Berpasangan">Tari Berpasangan</option>
+                        <option value="Kelompok">Tari Kelompok</option>
+                    </select>
+                </div>
+                <div class="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border">
+                    <span class="font-bold">Tari Gatotkaca (Jawa)</span>
+                    <select class="l2-answer p-2 rounded border focus:ring-2 ring-purple-300" data-correct="Tunggal">
+                        <option value="">Pilih...</option>
+                        <option value="Tunggal">Tari Tunggal</option>
+                        <option value="Berpasangan">Tari Berpasangan</option>
+                        <option value="Kelompok">Tari Kelompok</option>
+                    </select>
+                </div>
+                <div class="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border">
+                    <span class="font-bold">Tari Serampang Dua Belas</span>
+                    <select class="l2-answer p-2 rounded border focus:ring-2 ring-purple-300" data-correct="Berpasangan">
+                        <option value="">Pilih...</option>
+                        <option value="Tunggal">Tari Tunggal</option>
+                        <option value="Berpasangan">Tari Berpasangan</option>
+                        <option value="Kelompok">Tari Kelompok</option>
+                    </select>
+                </div>
+                <button onclick="checkL2()" class="w-full bg-purple-600 text-white font-bold py-3 rounded-xl mt-4">Kirim Jawaban</button>
+            </div>
+        </div>
+
+        <!-- Screen: Level 3 (Multiple Choice) -->
+        <div id="screen-l3" class="hidden flex-grow p-8">
+            <h3 class="text-xl font-semibold text-center mb-2">Level 3: Pengetahuan Umum</h3>
+            <p id="quiz-question" class="text-center text-lg font-medium text-gray-700 mt-6 mb-8"></p>
+            
+            <div id="quiz-options" class="grid grid-cols-1 gap-4 max-w-md mx-auto">
+                <!-- Options injected by JS -->
+            </div>
+        </div>
+
+        <!-- Screen: Score & Certificate -->
+        <div id="screen-final" class="hidden flex-grow p-8 flex flex-col items-center">
+            <div id="certificate" class="w-full shadow-lg">
+                <h1 class="text-4xl font-serif text-purple-900 mb-2">SERTIFIKAT KELULUSAN</h1>
+                <p class="text-lg italic">Diberikan kepada:</p>
+                <h2 id="cert-name" class="text-3xl font-bold my-4 border-b-2 border-gray-300 inline-block px-10 pb-2">NAMA PESERTA</h2>
+                <p class="mt-4 text-gray-700">Telah menyelesaikan tantangan</p>
+                <p class="font-bold text-xl uppercase tracking-widest text-purple-700">Jelajah Budaya Nusantara</p>
+                <div class="mt-8 flex justify-around items-center">
+                    <div class="text-left">
+                        <p class="text-sm">Skor Akhir:</p>
+                        <p id="cert-score" class="text-2xl font-bold">100/100</p>
+                    </div>
+                    <div class="w-24 h-24 bg-yellow-400 rounded-full flex items-center justify-center font-bold text-white shadow-inner rotate-12 border-4 border-yellow-500">
+                        LULUS
+                    </div>
+                </div>
+                <p class="mt-10 text-xs text-gray-400 italic">Dikeluarkan oleh Sistem AI Edukasi - Kelas 9 Seni Budaya</p>
+            </div>
+
+            <button onclick="window.print()" class="mt-8 bg-blue-600 text-white px-6 py-2 rounded-lg flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                Cetak Sertifikat
+            </button>
+            <button onclick="location.reload()" class="mt-4 text-purple-600 underline">Main Lagi</button>
+        </div>
+
+    </div>
+
+    <script>
+        let score = 0;
+        let currentLevel = 1;
+        let playerName = "";
+        const bgMusic = document.getElementById('bg-music');
+        const audioIcon = document.getElementById('audio-icon');
+
+        // Music Controls
+        function toggleAudio() {
+            if (bgMusic.paused) {
+                bgMusic.play().catch(e => console.log("Audio play prevented"));
+                audioIcon.innerText = "🔊";
+            } else {
+                bgMusic.pause();
+                audioIcon.innerText = "🔇";
+            }
+        }
+
+        function playSound() {
+            // Visual feedback for success
+            console.log("Success sound effect triggered");
+        }
+
+        // Logic for Level 1: Drag and Drop
+        const draggables = document.querySelectorAll('.draggable');
+        const dropZones = document.querySelectorAll('.drop-zone');
+        let matchedCount = 0;
+
+        draggables.forEach(draggable => {
+            draggable.addEventListener('dragstart', (e) => {
+                draggable.classList.add('opacity-50');
+                e.dataTransfer.setData('text/plain', draggable.id);
+            });
+            draggable.addEventListener('dragend', () => {
+                draggable.classList.remove('opacity-50');
+            });
+        });
+
+        dropZones.forEach(zone => {
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                zone.classList.add('drag-over');
+            });
+            zone.addEventListener('dragleave', () => {
+                zone.classList.remove('drag-over');
+            });
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('drag-over');
+                const id = e.dataTransfer.getData('text/plain');
+                const element = document.getElementById(id);
+                if (!element) return;
+                const targetMatch = zone.getAttribute('data-match');
+
+                if (element.innerText === targetMatch) {
+                    zone.querySelector('div').appendChild(element);
+                    element.draggable = false;
+                    element.classList.replace('bg-white', 'bg-green-100');
+                    element.classList.replace('border-purple-500', 'border-green-500');
+                    matchedCount++;
+                    score += 10;
+                    updateHUD();
+                    if (matchedCount === 3) {
+                        document.getElementById('btn-check-l1').classList.remove('hidden');
+                    }
+                } else {
+                    showFeedback("Salah! Coba lagi.");
+                }
+            });
+        });
+
+        function showFeedback(msg) {
+            const fb = document.createElement('div');
+            fb.className = "fixed top-10 bg-red-500 text-white px-6 py-2 rounded-full shadow-xl z-50 animate-bounce";
+            fb.innerText = msg;
+            document.body.appendChild(fb);
+            setTimeout(() => fb.remove(), 2000);
+        }
+
+        // Start Game
+        function startGame() {
+            playerName = document.getElementById('player-name').value;
+            if (!playerName) {
+                showFeedback("Masukkan nama dulu ya!");
+                return;
+            }
+            
+            // Start Music
+            bgMusic.play().then(() => {
+                audioIcon.innerText = "🔊";
+            }).catch(e => {
+                console.log("Auto-play blocked, user needs to toggle manually");
+            });
+
+            document.getElementById('screen-start').classList.add('hidden');
+            document.getElementById('screen-l1').classList.remove('hidden');
+        }
+
+        function updateHUD() {
+            document.getElementById('score-indicator').innerText = `Skor: ${score}`;
+            document.getElementById('level-indicator').innerText = `Level: ${currentLevel}/3`;
+            document.getElementById('progress-bar').style.width = `${(currentLevel/3) * 100}%`;
+        }
+
+        function checkL1() {
+            currentLevel = 2;
+            updateHUD();
+            document.getElementById('screen-l1').classList.add('hidden');
+            document.getElementById('screen-l2').classList.remove('hidden');
+        }
+
+        function checkL2() {
+            const selects = document.querySelectorAll('.l2-answer');
+            let allCorrect = true;
+            selects.forEach(s => {
+                if (s.value === s.getAttribute('data-correct')) {
+                    score += 10;
+                } else {
+                    allCorrect = false;
+                }
+            });
+
+            if (allCorrect) {
+                currentLevel = 3;
+                updateHUD();
+                document.getElementById('screen-l2').classList.add('hidden');
+                document.getElementById('screen-l3').classList.remove('hidden');
+                loadL3();
+            } else {
+                showFeedback("Beberapa jawaban masih salah!");
+                score = Math.max(0, score - 5); 
+                updateHUD();
+            }
+        }
+
+        const l3Questions = [
+            {
+                q: "Unsur pendukung tari yang berfungsi untuk mempertegas karakter tokoh adalah...",
+                options: ["Tata Rias", "Panggung", "Lampu", "Kamera"],
+                a: 0
+            },
+            {
+                q: "Seni teater tradisional dari Jawa Timur yang kental dengan unsur komedi adalah...",
+                options: ["Lenong", "Ludruk", "Ketoprak", "Mamanda"],
+                a: 1
+            },
+            {
+                q: "Bernyanyi secara berkelompok tanpa iringan alat musik disebut...",
+                options: ["Unisono", "Koor", "Akapela", "Vokal Grup"],
+                a: 2
+            }
+        ];
+
+        let l3Index = 0;
+
+        function loadL3() {
+            if (l3Index >= l3Questions.length) {
+                finishGame();
+                return;
+            }
+            const qData = l3Questions[l3Index];
+            document.getElementById('quiz-question').innerText = qData.q;
+            const container = document.getElementById('quiz-options');
+            container.innerHTML = "";
+            qData.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "p-4 bg-gray-100 hover:bg-purple-100 border-2 border-transparent hover:border-purple-500 rounded-xl transition-all text-left font-medium";
+                btn.innerText = opt;
+                btn.onclick = () => selectL3(idx);
+                container.appendChild(btn);
+            });
+        }
+
+        function selectL3(idx) {
+            if (idx === l3Questions[l3Index].a) {
+                score += 20;
+            }
+            l3Index++;
+            loadL3();
+            updateHUD();
+        }
+
+        function finishGame() {
+            document.getElementById('screen-l3').classList.add('hidden');
+            document.getElementById('screen-final').classList.remove('hidden');
+            document.getElementById('certificate').style.display = 'block';
+            document.getElementById('cert-name').innerText = playerName.toUpperCase();
+            document.getElementById('cert-score').innerText = `${score}/120`;
+            
+            for (let i = 0; i < 50; i++) {
+                const c = document.createElement('div');
+                c.className = "confetti";
+                c.style.left = Math.random() * 100 + "vw";
+                c.style.backgroundColor = ['#f2d74e', '#95e1d3', '#ea9085'][Math.floor(Math.random()*3)];
+                c.style.animationDelay = Math.random() * 2 + "s";
+                document.body.appendChild(c);
+            }
+        }
+    </script>
+</body>
+</html>
